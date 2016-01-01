@@ -29,6 +29,7 @@ var (
 
 type Repository interface {
 	Resolve(Coordinate) (*Artifact, error)
+	VersionsForCoordinate(Coordinate) ([]Coordinate, error)
 	fetchArtifact(Artifact) (io.ReadCloser, error)
 }
 
