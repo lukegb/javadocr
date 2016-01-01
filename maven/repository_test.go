@@ -107,3 +107,64 @@ func TestRepositoryResolution(t *testing.T) {
 	testRepositoryResolution(t, snapshotr, false)
 	testRepositoryResolution(t, releaser, true)
 }
+
+func TestRepositoryVersionsForCoordinate(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/org/spongepowered/spongeapi/maven-metadata.xml" {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		fmt.Fprintln(w, "%s", `
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>org.spongepowered</groupId>
+  <artifactId>spongeapi</artifactId>
+  <versioning>
+    <release>3.0.1-indev</release>
+    <versions>
+      <version>1.0.0-SNAPSHOT</version>
+      <version>1.0</version>
+      <version>1.1-SNAPSHOT</version>
+      <version>2.0</version>
+      <version>2.1-SNAPSHOT</version>
+      <version>3.0.0</version>
+      <version>3.0.1-indev</version>
+    </versions>
+    <lastUpdated>20160101075640</lastUpdated>
+  </versioning>
+</metadata>`)
+	}))
+	defer ts.Close()
+
+	coords := []Coordinate{
+		{"org.spongepowered", "spongeapi", "", "", "1.0.0-SNAPSHOT"},
+		{"org.spongepowered", "spongeapi", "", "", "1.0"},
+		{"org.spongepowered", "spongeapi", "", "", "1.1-SNAPSHOT"},
+		{"org.spongepowered", "spongeapi", "", "", "2.0"},
+		{"org.spongepowered", "spongeapi", "", "", "2.1-SNAPSHOT"},
+		{"org.spongepowered", "spongeapi", "", "", "3.0.0"},
+		{"org.spongepowered", "spongeapi", "", "", "3.0.1-indev"},
+	}
+
+	u, err := url.Parse(ts.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := RemoteRepository{
+		URL:                 u,
+		MayResolveSnapshots: true,
+	}
+	vers, err := rr.VersionsForCoordinate(Coordinate{"org.spongepowered", "spongeapi", "", "", "3.0.1-indev"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(vers) != len(coords) {
+		t.Fatalf("got %d elements, expected %d", len(vers), len(coords))
+	}
+	for n := range vers {
+		if vers[n] != coords[n] {
+			t.Fatalf("in position %d, got %#v, expected %#v", n, vers[n], coords[n])
+		}
+	}
+}

@@ -124,3 +124,31 @@ func (r RemoteRepository) coordinateDirectoryURL(c Coordinate) (*url.URL, error)
 
 	return r.URL.ResolveReference(cdurl), nil
 }
+
+func (r RemoteRepository) VersionsForCoordinate(c Coordinate) ([]Coordinate, error) {
+	// this is sort of cheating - we take a coordinate as input and produce several more
+	c.Version = ""
+	cdurl, err := r.coordinateDirectoryURL(c)
+	if err != nil {
+		return nil, err
+	}
+
+	mmurl := cdurl.ResolveReference(mavenMetadataURL)
+	rc, err := r.get(mmurl)
+	if err != nil {
+		return nil, err
+	}
+
+	mm, err := parseMavenMetadata(rc)
+	rc.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	coords := make([]Coordinate, len(mm.Versioning.Versions))
+	for n, v := range mm.Versioning.Versions {
+		c.Version = v
+		coords[n] = c
+	}
+	return coords, nil
+}
