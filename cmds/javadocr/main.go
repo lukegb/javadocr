@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 )
 
 func main() {
@@ -22,6 +23,10 @@ func main() {
 	}
 	h.ExcludeVersion("3.0.1-indev")
 
-	log.Println("ready")
-	log.Fatalln(http.ListenAndServe(":8181", h))
+	listenOn := os.Getenv("JAVADOCR_LISTEN")
+	if listenOn == "" {
+		listenOn = ":8181"
+	}
+	log.Println("ready, listening on", listenOn)
+	log.Fatalln(http.ListenAndServe(listenOn, h))
 }
