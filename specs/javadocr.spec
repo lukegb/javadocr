@@ -2,7 +2,7 @@
 
 Name:		javadocr
 Version:	%{version}
-Release:	%{?build_number:%{build_number}}{%!?build_number:1}%{?dist}
+Release:	%{?build_number:%{build_number}}%{!?build_number:1}%{?dist}
 Summary:	An automatic javadoc serving tool
 
 Group:		Web
