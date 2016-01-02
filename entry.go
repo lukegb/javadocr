@@ -43,6 +43,8 @@ type JavadocHandler struct {
 	repository maven.Repository
 	coordinate maven.Coordinate
 
+	compat map[string]bool
+
 	versions        []maven.Coordinate
 	excludeVersions map[string]bool
 	versionsLock    sync.RWMutex
@@ -209,7 +211,10 @@ func (h *JavadocHandler) fetchForCoordinate(c maven.Coordinate) (*ZipFileSystem,
 }
 
 func (h *JavadocHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path == "/" {
+	pth := strings.TrimPrefix(r.URL.Path, "/")
+	pieces := strings.SplitN(pth, "/", 2)
+
+	if x, ok := h.compat[pieces[0]]; r.URL.Path == "/" || (x && ok) {
 		h.versionsLock.RLock()
 		var vr maven.Coordinate
 		for n := len(h.versions) - 1; n >= 0; n-- {
@@ -219,14 +224,12 @@ func (h *JavadocHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		h.versionsLock.RUnlock()
-		w.Header().Add("Location", "/"+vr.Version+"/")
+		w.Header().Add("Location", "/"+vr.Version+r.URL.Path)
 		w.WriteHeader(http.StatusFound)
 		return
 	}
 
 	// otherwise, try and find that version
-	pth := strings.TrimPrefix(r.URL.Path, "/")
-	pieces := strings.SplitN(pth, "/", 2)
 	var vr *maven.Coordinate
 	h.versionsLock.Lock()
 	for _, r := range h.versions {
@@ -265,6 +268,10 @@ func (h *JavadocHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+func (jh *JavadocHandler) AddCompatFor(thing string) {
+	jh.compat[thing] = true
+}
+
 func (jh *JavadocHandler) populateVersions() error {
 	versions, err := jh.repository.VersionsForCoordinate(jh.coordinate)
 	if err != nil {
@@ -292,6 +299,7 @@ func NewJavadocHandler(repository maven.Repository, coordinate maven.Coordinate)
 	jh.coordinate = coordinate
 	jh.excludeVersions = make(map[string]bool)
 	jh.versionCache = make(JavadocCache)
+	jh.compat = make(map[string]bool)
 	if err := jh.populateVersions(); err != nil {
 		return nil, err
 	}

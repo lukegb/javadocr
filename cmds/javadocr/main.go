@@ -22,10 +22,29 @@ func main() {
 		panic(err)
 	}
 	h.ExcludeVersion("3.0.1-indev")
+	for _, thing := range []string{
+		"co", "org",
+		"package-list",
+		"overview-frame.html",
+		"constant-values.html",
+		"serialized-form.html",
+		"overview-tree.html",
+		"index-all.html",
+		"deprecated-list.html",
+		"allclasses-frame.html",
+		"allclasses-noframe.html",
+		"index.html",
+		"overview-summary.html",
+		"help-doc.html",
+		"stylesheet.css",
+		"script.js",
+	} {
+		h.AddCompatFor(thing)
+	}
 
 	listenOn := os.Getenv("JAVADOCR_LISTEN")
 	if listenOn == "" {
-		listenOn = ":8181"
+		listenOn = ":16080"
 	}
 	log.Println("ready, listening on", listenOn)
 	log.Fatalln(http.ListenAndServe(listenOn, h))
