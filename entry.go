@@ -224,7 +224,11 @@ func (h *JavadocHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		h.versionsLock.RUnlock()
-		w.Header().Add("Location", "/"+vr.Version+r.URL.Path)
+		q := ""
+		if r.URL.RawQuery != "" {
+			q = "?" + r.URL.RawQuery
+		}
+		w.Header().Add("Location", "/"+vr.Version+r.URL.Path+q)
 		w.WriteHeader(http.StatusFound)
 		return
 	}
