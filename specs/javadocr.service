@@ -1,0 +1,9 @@
+[Unit]
+Description=javadocr
+
+[Service]
+ExecStart=/usr/bin/javadocr
+Type=simple
+
+[Install]
+WantedBy=multi-user.target
