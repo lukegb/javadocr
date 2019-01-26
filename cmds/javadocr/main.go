@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	u, err := url.Parse("http://repo.spongepowered.org/maven/")
+	u, err := url.Parse("https://repo.spongepowered.org/maven/")
 	if err != nil {
 		panic(err)
 	}
